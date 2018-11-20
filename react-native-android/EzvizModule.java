@@ -13,7 +13,7 @@ import com.videogo.openapi.EZOpenSDK;
 public class EzvizModule extends BaseModule {
     private static final String REACT_CLASS = "EzvizModule";
 
-    public static String AppKey = "2b79fac39a4c4689b1d2bdc9f7cf2710";
+    public static String AppKey = "";
 
     public EzvizModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -40,7 +40,6 @@ public class EzvizModule extends BaseModule {
 
     @ReactMethod
     public void setAccessToken(String accessToken){
-        Log.i("ezviz_yi",accessToken+"//onZoomChange");
         EzvizUtils.getOpenSDK().setAccessToken(accessToken);
     }
 
