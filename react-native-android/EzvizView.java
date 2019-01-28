@@ -1,4 +1,4 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 import android.content.Context;
 import android.media.MediaPlayer;
@@ -17,74 +17,72 @@ import java.io.IOException;
 /**
  * Created by zhy on 2018/11/3.
  */
-
-public class EzvizView extends SurfaceView implements SurfaceHolder.Callback, Handler.Callback {
-
-    //private MediaPlayer mPlayer = new MediaPlayer();
-    //String uri="https://media.w3.org/2010/05/sintel/trailer.mp4";
-    private SurfaceHolder mSurfaceHolder = null;
+public class EzvizView extends SurfaceView{
+//public class EzvizView extends SurfaceView implements SurfaceHolder.Callback, Handler.Callback {
+//    private MediaPlayer mPlayer = new MediaPlayer();
+//    String uri="https://media.w3.org/2010/05/sintel/trailer.mp4";
+//    private SurfaceHolder mSurfaceHolder = null;
 
     protected EZPlayer player;
     protected String deviceSerial = "";
-    protected int cameraNo = 1; 
+    protected int cameraNo = 0;
     protected int mStatus = RealPlayStatus.STATUS_INIT; 
-
     protected EZPlayer talk;
     protected int mTalkStatus = RealPlayStatus.STATUS_INIT; 
+    protected boolean soundStatus = false; 
 
     public EzvizView(Context context) {
         super(context);
-        //initView(context);
-    }
-//--------------------------------------------------
-    private void initView(Context context) {
-        try {
-            mPlayer.setDataSource(context, Uri.parse(uri));
-            mSurfaceHolder=this.getHolder();
-            mSurfaceHolder.addCallback(this);
-            mPlayer.prepare();
-            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mPlayer.start();
-                    mPlayer.setLooping(true);
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
-    public void vRestart(){
-        mPlayer.start();
-    }
+//    private void initView(Context context) {
+//        try {
+//            mPlayer.setDataSource(context, Uri.parse(uri));
+//            mSurfaceHolder=this.getHolder();
+//            mSurfaceHolder.addCallback(this);
+//            mPlayer.prepare();
+//            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+//                @Override
+//                public void onPrepared(MediaPlayer mp) {
+//                    mPlayer.start();
+//                    mPlayer.setLooping(true);
+//                }
+//            });
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public void vRestart(){
+//        mPlayer.start();
+//    }
+//
+//    public void vPause(){
+//        mPlayer.pause();
+//    }
+//
+//    @Override
+//    public void surfaceChanged(SurfaceHolder holder, int format, int width,int height) {}
+//    @Override
+//    public void surfaceCreated(SurfaceHolder holder) {
+//        mPlayer.setDisplay(holder);
+//    }
+//    @Override
+//    public void surfaceDestroyed(SurfaceHolder holder) {}
+//
+//    @Override
+//    public boolean handleMessage(Message message) {
+//        Log.i("ezviz_yi", message+"//message in View");
+//        return false;
+//    }
 
-    public void vPause(){
-        mPlayer.pause();
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width,int height) {}
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        mPlayer.setDisplay(holder);
-    }
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {}
-
-    @Override
-    public boolean handleMessage(Message message) {
-        return false;
-    }
-//--------------------------------------------------
-    
     public void stopPlay(){
         if(player != null){
             player.stopRealPlay();
             mStatus = RealPlayStatus.STATUS_STOP;
         }
     }
-    
+
     public void startPlay(){
         if(player != null){
             player.startRealPlay();

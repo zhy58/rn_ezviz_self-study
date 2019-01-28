@@ -24,9 +24,9 @@ export default {
                 reject(e);
                 return;
             }
-            DeviceEventEmitter.once('onConfigureNetworkCallback', resp => {
-                resolve(resp);
-            });
+            // DeviceEventEmitter.once('onConfigureNetworkCallback', resp => {
+            //     resolve(resp);
+            // });
         });
     },
     ezStopConfigureNetwork() {
@@ -40,10 +40,10 @@ export default {
             }
         });
     },
-    ezPlay(bool, verifyCode) {
+    ezPlay(bool, sound, verifyCode) {
         return new Promise((resolve, reject) => {
             try {
-                _module.ezPlay(bool, verifyCode ? verifyCode : "");
+                _module.ezPlay(bool, sound || false, verifyCode || "");
             }
             catch (e) {
                 reject(e);
@@ -137,5 +137,8 @@ export default {
     },
     getOrientation() {
         return _module.getOrientation();
+    },
+    setOrientation(number){
+        return _module.setOrientation(number);
     },
 };

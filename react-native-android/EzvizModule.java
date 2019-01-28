@@ -1,4 +1,4 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 import android.util.Log;
 
@@ -13,7 +13,7 @@ import com.videogo.openapi.EZOpenSDK;
 public class EzvizModule extends BaseModule {
     private static final String REACT_CLASS = "EzvizModule";
 
-    public static String AppKey = "";
+    // public static String AppKey = "";
 
     public EzvizModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -25,12 +25,12 @@ public class EzvizModule extends BaseModule {
         return REACT_CLASS;
     }
 
-//    @Override
-//    public void initialize() {
-//        super.initialize();
-//        Application application = (Application) getReactApplicationContext().getBaseContext();
-//        EZOpenSDK.initLib(application, AppKey);
-//    }
+   // @Override
+   // public void initialize() {
+   //     super.initialize();
+   //     Application application = (Application) getReactApplicationContext().getBaseContext();
+   //     EZOpenSDK.initLib(application, AppKey);
+   // }
 
     @Override
     public void onCatalystInstanceDestroy() {
@@ -40,6 +40,7 @@ public class EzvizModule extends BaseModule {
 
     @ReactMethod
     public void setAccessToken(String accessToken){
+        Log.i("ezviz_yi",accessToken+"//onZoomChange");
         EzvizUtils.getOpenSDK().setAccessToken(accessToken);
     }
 

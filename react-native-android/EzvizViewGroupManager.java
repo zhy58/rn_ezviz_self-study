@@ -1,14 +1,12 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.os.Handler;
 import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
 import android.view.WindowManager;
 
 import com.facebook.react.bridge.Arguments;
@@ -17,7 +15,7 @@ import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
-import com.geer2.xiaokuai.MainApplication;
+import com.geer2.dakuai.MainApplication;
 import com.videogo.constant.Constant;
 import com.videogo.exception.BaseException;
 import com.videogo.openapi.EZConstants;
@@ -26,6 +24,10 @@ import com.videogo.realplay.RealPlayStatus;
 import com.videogo.widget.CustomRect;
 import com.videogo.widget.CustomTouchListener;
 
+/**
+ * Created by zhy on 2018/11/2.
+ */
+
 public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implements SurfaceHolder.Callback {
     private static final String REACT_CLASS = "RCTEzvizView";
 
@@ -33,20 +35,29 @@ public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implemen
     private MainApplication application;
     private ThemedReactContext mContext;
 
-    private String verifyCode = ""; 
-    private String accessToken = ""; 
+    private String verifyCode = "";
+    private String accessToken = "";
 
     private EzvizView mSurfaceView;
     private SurfaceHolder mSurfaceHolder = null;
 
     private CustomTouchListener mCustomTouchListener = null;
+    private int count = 1; 
     private Boolean sound = false;
+
     private float mPlayScale = 1;
+
     private Integer mCurrentQulityMode = EZConstants.EZVideoLevel.VIDEO_LEVEL_HD.getVideoLevel();
 
+    /**
+     *  初始化SDK
+     * @param context
+     */
     public void initSDK(Context context) {
-        application = (MainApplication) context.getApplicationContext();
-        EZOpenSDK.initLib(application, AppKey);
+       application = (MainApplication) context.getApplicationContext();
+       // 设置是否支持P2P取流
+       EZOpenSDK.enableP2P(true);
+       EZOpenSDK.initLib(application, AppKey);
     }
 
     @Override
@@ -94,10 +105,20 @@ public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implemen
             }
 
             @Override
-            public void onSingleClick() {}
+            public void onSingleClick() {
+                WritableMap writableMap = Arguments.createMap();
+                writableMap.putString("type", "onSingleClick");
+                writableMap.putInt("number", 1);
+                sendEvent(mSurfaceView, "onSingleClick", writableMap);
+            }
 
             @Override
-            public void onDoubleClick(MotionEvent motionEvent) {}
+            public void onDoubleClick(MotionEvent motionEvent) {
+                WritableMap writableMap = Arguments.createMap();
+                writableMap.putString("type", "onDoubleClick");
+                writableMap.putInt("number", 2);
+                sendEvent(mSurfaceView, "onDoubleClick", writableMap);
+            }
 
             @Override
             public void onZoom(float scale) {}
@@ -189,34 +210,39 @@ public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implemen
         @Override
         public boolean handleMessage(Message message) {
             switch (message.what){
-                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_PLAY_SUCCESS:
+                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_PLAY_SUCCESS: //视频播放成功执行
                     mSurfaceView.mStatus = RealPlayStatus.STATUS_PLAY;
                     EzvizPlayModule.setRealplayPlaySuccess(message);
                     realplayPlaySuccess(message);
+                    if(mSurfaceView.soundStatus){
+                        mSurfaceView.player.openSound();
+                    }else{
+                        mSurfaceView.player.closeSound();
+                    }
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_STOP_SUCCESS:
+                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_STOP_SUCCESS: //视频暂停播放执行
                     mSurfaceView.mStatus = RealPlayStatus.STATUS_STOP;
                     EzvizPlayModule.setRealplayPlaySuccess(message);
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_PLAY_FAIL:
+                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_PLAY_FAIL: //视频播放失败执行
                     mSurfaceView.mStatus = RealPlayStatus.STATUS_STOP;
                     EzvizPlayModule.setRealplayPlayFail(message);
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_SET_VEDIOMODE_SUCCESS:
+                case EZConstants.EZRealPlayConstants.MSG_SET_VEDIOMODE_SUCCESS: //视频清晰度设置成功执行
                     EzvizPlayModule.setRealplayPlaySuccess(message);
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_SET_VEDIOMODE_FAIL:
+                case EZConstants.EZRealPlayConstants.MSG_SET_VEDIOMODE_FAIL: //视频清晰度设置失败执行
                     EzvizPlayModule.setRealplayPlayFail(message);
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_VOICETALK_SUCCESS:
+                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_VOICETALK_SUCCESS: //开启对讲成功执行
                     mSurfaceView.mTalkStatus = RealPlayStatus.STATUS_PLAY;
-                    EzvizPlayModule.setRealplayTalkSuccess(message);
+                    EzvizPlayModule.setRealplayPlaySuccess(message);
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_VOICETALK_STOP:
+                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_VOICETALK_STOP: //暂停对讲成功执行
                     mSurfaceView.mTalkStatus = RealPlayStatus.STATUS_STOP;
-                    EzvizPlayModule.setRealplayTalkSuccess(message);
+                    EzvizPlayModule.setRealplayPlaySuccess(message);
                     break;
-                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_VOICETALK_FAIL:
+                case EZConstants.EZRealPlayConstants.MSG_REALPLAY_VOICETALK_FAIL: //开启对讲失败执行
                     mSurfaceView.mTalkStatus = RealPlayStatus.STATUS_STOP;
                     EzvizPlayModule.setRealplayPlayFail(message);
                     break;
@@ -252,6 +278,7 @@ public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implemen
             mSurfaceView.player.setSurfaceHold(null);
         }else{
             mSurfaceView.player = null;
+            mSurfaceHolder = null;
         }
     }
 
@@ -288,8 +315,8 @@ public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implemen
 
     @ReactProp(name = "sound")
     public void setSound(EzvizView mSurfaceView, Boolean bool){
-        sound = bool;
         if(mSurfaceView != null && mSurfaceView.player != null){
+            mSurfaceView.soundStatus = bool;
             if(bool){
                 mSurfaceView.player.openSound();
             }else{
@@ -319,6 +346,12 @@ public class EzvizViewGroupManager extends SimpleViewManager<EzvizView> implemen
             }
         }
 
+    }
+
+    public WritableMap ezOnSingleClick(String str){
+        WritableMap writableMap = Arguments.createMap();
+        writableMap.putString("type", str);
+        return writableMap;
     }
 
     private void sendEvent(EzvizView mSurfaceView, String eventName, WritableMap params){

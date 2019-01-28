@@ -1,4 +1,4 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 import android.app.Activity;
 import android.app.Application;
@@ -34,11 +34,19 @@ import com.videogo.realplay.RealPlayStatus;
 import com.videogo.util.MediaScanner;
 import com.videogo.util.SDCardUtil;
 
+/**
+ * Created by zhy on 2018/11/2.
+ */
+
 public class EzvizPlayModule extends BaseModule implements LifecycleEventListener{
     private static final String REACT_CLASS = "EzvizPlayModule";
 
     private static EzvizView mSurfaceView;
     private static ReactApplicationContext staticContext;
+
+    private Integer flag = RealPlayStatus.STATUS_INIT;
+    private Integer flagTalk = RealPlayStatus.STATUS_INIT;
+    private boolean flagSound = false;
 
     private Application mApplication;
     private AudioPlayUtil mAudioPlayUtil;
@@ -63,13 +71,12 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
             @Override
             public void onStartConfigWifiCallback(String s, EZConstants.EZWifiConfigStatus ezWifiConfigStatus) {
                 if (ezWifiConfigStatus == EZConstants.EZWifiConfigStatus.DEVICE_WIFI_CONNECTING) {
-                    EzvizUtils.getOpenSDK().stopConfigWiFi();
                     sendEvent("onConfigureNetworkCallback", onConfigureNetworkCallback(1, s));
                 } else if (ezWifiConfigStatus == EZConstants.EZWifiConfigStatus.DEVICE_WIFI_CONNECTED) {
-                    EzvizUtils.getOpenSDK().stopConfigWiFi();
+                    ezStopConfigureNetwork();
                     sendEvent("onConfigureNetworkCallback", onConfigureNetworkCallback(2, s));
                 } else if (ezWifiConfigStatus == EZConstants.EZWifiConfigStatus.DEVICE_PLATFORM_REGISTED) {
-                    EzvizUtils.getOpenSDK().stopConfigWiFi();
+                    ezStopConfigureNetwork();
                     sendEvent("onConfigureNetworkCallback", onConfigureNetworkCallback(3, s));
                 }
             }
@@ -100,6 +107,9 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
             public void onReceive(Context ctx, Intent intent) {
                 Configuration newConfig = intent.getParcelableExtra("newConfig");
                 WritableMap params = Arguments.createMap();
+                params.putInt("status", flag); 
+                params.putInt("statusTalk", flagTalk); 
+                params.putBoolean("statusSound", flagSound);
                 if(newConfig.orientation == 1){
                     params.putString("orientation", "PORTRAIT");
                     context.getCurrentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -128,7 +138,6 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
         WritableMap writableMap = Arguments.createMap();
         writableMap.putInt("code", msg.what);
         ErrorInfo errorInfo = (ErrorInfo) msg.obj;
-        Log.i("ezviz_yi", errorInfo+"//errorCode");
         if(errorInfo != null){
             writableMap.putInt("errorCode", errorInfo.errorCode);
             writableMap.putString("description", errorInfo.description);
@@ -139,17 +148,31 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
     }
 
     public static void setRealplayPlaySuccess(Message msg){
-        staticSendEvent("onRealplayCallback", onRealplayPlaySuccess(msg, "开启播放成功"));
+        staticSendEvent("onRealplayCallback", onRealplayPlaySuccess(msg));
     }
 
-    public static void setRealplayTalkSuccess(Message msg){
-        staticSendEvent("onRealplayCallback", onRealplayPlaySuccess(msg, "开启对讲成功"));
-    }
-
-    public static WritableMap onRealplayPlaySuccess(Message msg, String description){
+    public static WritableMap onRealplayPlaySuccess(Message msg){
         WritableMap writableMap = Arguments.createMap();
         writableMap.putInt("code", msg.what);
-        writableMap.putString("description", description);
+        switch (msg.what){
+            case 102:
+                writableMap.putString("description", "开启播放成功");
+                break;
+            case 133:
+                writableMap.putString("description", "暂停播放成功");
+                break;
+            case 105:
+                writableMap.putString("description", "设置清晰度成功");
+                break;
+            case 113:
+                writableMap.putString("description", "开启对讲成功");
+                break;
+            case 115:
+                writableMap.putString("description", "暂停对讲成功");
+                break;
+            default:
+                break;
+        }
         writableMap.putString("status", "success");
         return writableMap;
     }
@@ -157,12 +180,14 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
     private void onCapturePic(){
         WritableMap writableMap = Arguments.createMap();
         if (!SDCardUtil.isSDCardUseable()) {
+            writableMap.putInt("code", 2);
             writableMap.putString("description", "截图失败：存储卡不可用");
             writableMap.putString("status", "error");
             sendEvent("onCaptureCallback", writableMap);
             return;
         }
         if (SDCardUtil.getSDCardRemainSize() < SDCardUtil.PIC_MIN_MEM_SPACE) {
+            writableMap.putInt("code", 3);
             writableMap.putString("description", "截图失败：存储空间已满");
             writableMap.putString("status", "error");
             sendEvent("onCaptureCallback", writableMap);
@@ -191,6 +216,7 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
                             MediaScanner mMediaScanner = new MediaScanner(context.getApplicationContext());
                             mMediaScanner.scanFile(path, "jpg");
                             WritableMap _writableMap = Arguments.createMap();
+                            _writableMap.putInt("code", 0);
                             _writableMap.putString("description", "已保存至相册"+ path);
                             _writableMap.putString("status", "success");
                             sendEvent("onCaptureCallback", _writableMap);
@@ -209,11 +235,13 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
             };
             thr.start();
         }else if(mSurfaceView.mStatus == RealPlayStatus.STATUS_STOP || mSurfaceView.mStatus == RealPlayStatus.STATUS_INIT){
+            writableMap.putInt("code", 1);
             writableMap.putString("description", "截图失败：请先开启直播功能");
             writableMap.putString("status", "error");
             sendEvent("onCaptureCallback", writableMap);
             return;
         }else{
+            writableMap.putInt("code", -1);
             writableMap.putString("description", "截图失败");
             writableMap.putString("status", "error");
             sendEvent("onCaptureCallback", writableMap);
@@ -221,16 +249,9 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
         }
     }
 
-    private void setQrientation(Integer orientation){
-        final Activity activity = getCurrentActivity();
-        if(activity != null){
-            activity.setRequestedOrientation(orientation);
-        }
-    }
-
     @ReactMethod
     public void ezStartConfigureNetwork(String deviceSerial, String ssid, String password){
-        EzvizUtils.getOpenSDK().startConfigWifi(context.getApplicationContext(), deviceSerial, ssid, password, mode, mEZStartConfigWifiCallback);
+        EzvizUtils.getOpenSDK().startConfigWifi(context,deviceSerial, ssid, password, mode, mEZStartConfigWifiCallback);
     }
 
     @ReactMethod
@@ -239,27 +260,26 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
     }
 
     @ReactMethod
-    public void ezPlay(Boolean bool, String verifyCode){
+    public void ezPlay(Boolean bool, Boolean soundBool, String verifyCode){
         if(mSurfaceView != null){
+            mSurfaceView.soundStatus = soundBool;
             if(!bool){
                 mSurfaceView.stopPlay();
             }else {
                 if(verifyCode.length() <= 0){
                     mSurfaceView.startPlay();
                 }else{
-                    if(mSurfaceView.player != null){
-                        mSurfaceView.stopPlay();
-                        mSurfaceView.player.setPlayVerifyCode(verifyCode);
-                        mSurfaceView.startPlay();
-                    }
+                    mSurfaceView.player.setPlayVerifyCode(verifyCode);
+                    mSurfaceView.startPlay();
                 }
             }
         }
     }
 
     @ReactMethod
-    public void ezSound(Boolean bool){        
+    public void ezSound(Boolean bool){
         if(mSurfaceView != null && mSurfaceView.player != null){
+            mSurfaceView.soundStatus = bool;
             if(!bool){
                 mSurfaceView.player.closeSound();
             }else{
@@ -299,6 +319,7 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
     public void ezTalk(Boolean bool, String verifyCode){
         if(mSurfaceView != null && mSurfaceView.player != null && mSurfaceView.talk != null){
             if(bool){
+                mSurfaceView.soundStatus = false;
                 mSurfaceView.player.closeSound();
                 mSurfaceView.talk.setVoiceTalkStatus(false);
                 mSurfaceView.startTalk();
@@ -322,16 +343,24 @@ public class EzvizPlayModule extends BaseModule implements LifecycleEventListene
     @ReactMethod
     public void ezFullscreen(Boolean bool){
         if(mSurfaceView != null){
-            Integer flag = mSurfaceView.mStatus;
+            flag = mSurfaceView.mStatus;
+            flagTalk = mSurfaceView.mTalkStatus;
+            flagSound = mSurfaceView.soundStatus;
             mSurfaceView.stopPlay();
+            mSurfaceView.stopTalk();
             if(bool){
-                setQrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             }else{
-                setQrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             }
-            if(flag == RealPlayStatus.STATUS_PLAY){
-                mSurfaceView.startPlay();
-            }
+        }
+    }
+
+    @ReactMethod
+    private void setOrientation(Integer orientation){
+        final Activity activity = getCurrentActivity();
+        if(activity != null){
+            activity.setRequestedOrientation(orientation);
         }
     }
 

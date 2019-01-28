@@ -1,4 +1,4 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 import android.graphics.Bitmap;
 import android.text.TextUtils;

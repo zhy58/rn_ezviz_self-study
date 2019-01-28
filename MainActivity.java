@@ -1,6 +1,5 @@
 package com.geer2.xiaokuai;
 
-// ezviz 全屏操作
 import android.content.Intent;
 import android.content.res.Configuration;
 

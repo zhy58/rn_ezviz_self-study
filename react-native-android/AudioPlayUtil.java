@@ -1,4 +1,4 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 /*
  * Created by zhy on 2018/10/29.
@@ -16,7 +16,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.SoundPool;
 
-import com.geer2.xiaokuai.R;
+import com.geer2.dakuai.R;
 
 import java.util.HashMap;
 

@@ -1,4 +1,4 @@
-package com.geer2.xiaokuai.lib.ezviz;
+package com.geer2.dakuai.lib.ezviz;
 
 import android.support.annotation.Nullable;
 
@@ -19,6 +19,13 @@ abstract public class BaseModule extends ReactContextBaseJavaModule {
         context = reactContext;
     }
 
+    /**
+     *
+     * @param eventName
+     * @param params
+     *
+     *  通过RCTDeviceEventEmitter向JS传递事件
+     */
     protected void sendEvent(String eventName,@Nullable WritableMap params) {
         context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit(eventName, params);
